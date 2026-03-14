@@ -35,9 +35,20 @@ The **live** impact numbers are the 17×17 matrix (and global scale) the simulat
 2. **Browser storage:** Editing a factor in the dev panel (or the global scale) saves the full matrix to `localStorage` so your edits persist across refreshes.
 3. **Export:** Use “Export live impact matrix” in the dev panel to download the current live numbers as JSON. Save the file as `data/live-impact-matrix.json` to commit them to the repo.
 
+## Initial conditions and equilibria
+
+The sim is tuned so **where you start can change where you end up**:
+
+- **Allee effect** (`ALLEE_THRESHOLD`, `ALLEE_STRENGTH`): At low density, birth is reduced so very low populations (e.g. Wolves, Elk) grow slowly and can stay in a “low” equilibrium.
+- **Support-dependent recovery**: Grass/trees and Fish only get strong floor recovery when Land fertility / River quality are above a threshold; low support can trap them near the floor.
+- **Prey scarcity**: When Elk (or Fish) is low, Wolves (or Bears) get extra death and can drop to a lower equilibrium, so e.g. “many wolves, few elk” can lead to wolves crashing and elk recovering.
+
+Tune these in `data/ecosystem-config.js` to make convergence more or less sensitive to initial values.
+
 ## Config (developers)
 
 - **Impact matrix, ranges, birth/death, hunt probabilities:** `data/ecosystem-config.js`
+- **Allee and path-dependence:** `ALLEE_THRESHOLD`, `ALLEE_STRENGTH`, `FLOOR_RECOVERY_SUPPORT`, `FLOOR_SUPPORT_THRESHOLD` in the same file.
 - **Initial values:** `INITIAL_VALUES` in the same file (tuned so the system can reach equilibrium).
 - **Simulation step and scaling:** `createEngine({ timeStep, impactScale })` in `js/ecosystem-engine.js`.
 

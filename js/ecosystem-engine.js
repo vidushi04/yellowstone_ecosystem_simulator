@@ -15,7 +15,11 @@ import {
   HUNT_SUCCESS_PROBABILITY,
   CARRYING_CAPACITY_FRACTION,
   GLOBAL_IMPACT_SCALE,
-  RATE_COUPLING_STRENGTH
+  RATE_COUPLING_STRENGTH,
+  ALLEE_THRESHOLD,
+  ALLEE_STRENGTH,
+  FLOOR_RECOVERY_SUPPORT,
+  FLOOR_SUPPORT_THRESHOLD
 } from '../data/ecosystem-config.js';
 
 export function createEngine(options = {}) {
@@ -99,6 +103,9 @@ export function createEngine(options = {}) {
   const FLOOR_RECOVERY_THRESHOLD = 0.2; // below this fraction of range span = near-min
   const FLOOR_RECOVERY_RATE = 0.02;    // extra growth per tick when near min
 
+  // Allee effect: species that start very low grow slowly (so initial conditions lead to different equilibria)
+  const ALLEE_IDS = ['Wolves', 'Elk', 'Bears', 'Beaver', 'Birds', 'OtherAnimals'];
+
   function birthDeathDelta(id, value, current) {
     const birthProb = BIRTH_PROBABILITY[id] ?? 0;
     const deathProb = DEATH_PROBABILITY[id] ?? 0;
@@ -108,29 +115,48 @@ export function createEngine(options = {}) {
     let delta = 0;
     if (birthProb > 0 && value > 0) {
       const logistic = 1 - value / K;
-      const births = value * birthProb * Math.max(0, logistic) * dt;
+      let births = value * birthProb * Math.max(0, logistic) * dt;
+      // Allee effect: at low density (below ALLEE_THRESHOLD of K), birth is suppressed so low pops don't always bounce back
+      if (ALLEE_IDS.includes(id)) {
+        const density = value / K;
+        if (density < ALLEE_THRESHOLD) {
+          const alleeFactor = ALLEE_STRENGTH + (1 - ALLEE_STRENGTH) * (density / ALLEE_THRESHOLD);
+          births *= alleeFactor;
+        }
+      }
       delta += births;
     }
-    // Floor recovery: when vegetation/fish are near minimum, add small regeneration so they can rebound
+    // Floor recovery: when vegetation/fish are near minimum, add regeneration — but only if "support" is high enough (path dependence)
     if (FLOOR_RECOVERY_IDS.includes(id) && value > 0) {
       const span = max - min;
       const frac = (value - min) / span;
-      if (frac < FLOOR_RECOVERY_THRESHOLD)
-        delta += span * FLOOR_RECOVERY_RATE * (1 - frac / FLOOR_RECOVERY_THRESHOLD) * dt;
+      if (frac < FLOOR_RECOVERY_THRESHOLD) {
+        let recoveryRate = FLOOR_RECOVERY_RATE * (1 - frac / FLOOR_RECOVERY_THRESHOLD) * dt;
+        const supportId = FLOOR_RECOVERY_SUPPORT[id];
+        if (supportId && RANGES[supportId]) {
+          const supportVal = current[supportId] ?? 0;
+          const [, supportMax] = RANGES[supportId];
+          const supportFrac = supportVal / supportMax;
+          if (supportFrac < FLOOR_SUPPORT_THRESHOLD)
+            recoveryRate *= supportFrac / FLOOR_SUPPORT_THRESHOLD; // weak recovery when support is low
+        }
+        delta += span * recoveryRate;
+      }
     }
     if (deathProb > 0 && value > 0) {
       const crowding = value / K;
       const crowdingPenalty = crowding > 0.4 ? 0.8 * (crowding - 0.4) : 0;
       let deathRate = deathProb * (1 + crowdingPenalty);
-      // Prey scarcity: wolves/bears take extra death when main prey is low so they don't max out while prey collapses
+      // Prey scarcity: when main prey is low, predators get extra death so they can collapse to a low equilibrium.
+      // Different initial conditions (e.g. many wolves, few elk) then lead to different final state (wolves crash, elk recovers).
       if (id === 'Wolves') {
         const elk = current.Elk ?? 0;
         const elkK = (RANGES.Elk[1] * CARRYING_CAPACITY_FRACTION);
-        if (elk < elkK * 0.35) deathRate += 0.04 * (1 - elk / (elkK * 0.35));
+        if (elk < elkK * 0.4) deathRate += 0.08 * (1 - elk / (elkK * 0.4));
       } else if (id === 'Bears') {
         const fish = current.Fish ?? 0;
         const fishK = (RANGES.Fish[1] * CARRYING_CAPACITY_FRACTION);
-        if (fish < fishK * 0.4) deathRate += 0.03 * (1 - fish / (fishK * 0.4));
+        if (fish < fishK * 0.45) deathRate += 0.06 * (1 - fish / (fishK * 0.45));
       }
       delta -= value * deathRate * dt;
     }

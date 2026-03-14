@@ -309,5 +309,6 @@ if (btnExportImpact) btnExportImpact.addEventListener('click', exportLiveImpactM
 (async () => {
   await loadStoredImpactMatrix();
   renderComponentCards();
+  setupRippleControl();
   el.globalScaleValue.textContent = el.globalImpactScale.value;
 })();

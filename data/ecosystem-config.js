@@ -168,6 +168,20 @@ export const INITIAL_VALUES = {
 // Kept below 1 to avoid positive feedback driving everything to max
 export const GLOBAL_IMPACT_SCALE = 0.35;
 
+// Allee effect: below this fraction of carrying capacity, birth rate is reduced so low populations
+// struggle to grow. Makes initial conditions matter (e.g. very low Wolves → stay low; high start → different equilibrium).
+export const ALLEE_THRESHOLD = 0.18;
+export const ALLEE_STRENGTH = 0.25; // birth scaled to this at N→0 (so low pops grow slowly)
+
+// Floor recovery only works well when "support" is present; otherwise low populations can stay low (path dependence).
+export const FLOOR_RECOVERY_SUPPORT = {
+  Grass: 'LandFertility',
+  CottonWood: 'LandFertility',
+  BerryTrees: 'LandFertility',
+  Fish: 'RiverQuality'
+};
+export const FLOOR_SUPPORT_THRESHOLD = 0.35; // support must be above this fraction of its max for full floor recovery
+
 // Rate-of-change coupling: a component's *rate of change* (increase/decrease) affects linked components.
 // E.g. when Dam is decreasing, River quality is pulled down even if the level link Dam→River is positive.
 // Strength in [0,1]; 0 = level-only (old behavior), higher = stronger propagation of rates.
