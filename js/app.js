@@ -8,8 +8,7 @@ import {
   INITIAL_VALUES,
   COMPONENT_LABELS,
   COMPONENT_IDS,
-  RANGES,
-  BASE_IMPACT_MATRIX
+  RANGES
 } from '../data/ecosystem-config.js';
 
 // Abbreviations for dev grid
@@ -22,25 +21,19 @@ const SHORT_LABELS = {
 
 const LIVE_IMPACT_STORAGE_KEY = 'yellowstone-live-impact-matrix';
 
-const engine = createEngine({ timeStep: 0.15 });
-engine.setState(INITIAL_VALUES);
+let engine;
 
-// Load stored live impact numbers: try data/live-impact-matrix.json first, then localStorage
-async function loadStoredImpactMatrix() {
+// Load live impact matrix from data/live-impact-matrix.json or localStorage. Used to overwrite impact at startup.
+async function loadLiveImpactMatrix() {
   try {
     const res = await fetch('data/live-impact-matrix.json');
     if (res.ok) {
       const data = await res.json();
       if (data.matrix && Array.isArray(data.matrix) && data.matrix.length === COMPONENT_IDS.length) {
-        engine.setImpactMatrix(data.matrix);
-        if (typeof data.globalImpactScale === 'number') {
-          engine.setImpactScale(data.globalImpactScale);
-          const scaleEl = document.getElementById('global-impact-scale');
-          const valueEl = document.getElementById('global-scale-value');
-          if (scaleEl) scaleEl.value = data.globalImpactScale;
-          if (valueEl) valueEl.textContent = String(data.globalImpactScale);
-        }
-        return;
+        return {
+          matrix: data.matrix,
+          globalImpactScale: typeof data.globalImpactScale === 'number' ? data.globalImpactScale : undefined
+        };
       }
     }
   } catch (_) {}
@@ -48,21 +41,19 @@ async function loadStoredImpactMatrix() {
     const raw = localStorage.getItem(LIVE_IMPACT_STORAGE_KEY);
     if (raw) {
       const data = JSON.parse(raw);
-      if (data.matrix && Array.isArray(data.matrix)) {
-        engine.setImpactMatrix(data.matrix);
-        if (typeof data.globalImpactScale === 'number') {
-          engine.setImpactScale(data.globalImpactScale);
-          const scaleEl = document.getElementById('global-impact-scale');
-          const valueEl = document.getElementById('global-scale-value');
-          if (scaleEl) scaleEl.value = data.globalImpactScale;
-          if (valueEl) valueEl.textContent = String(data.globalImpactScale);
-        }
+      if (data.matrix && Array.isArray(data.matrix) && data.matrix.length === COMPONENT_IDS.length) {
+        return {
+          matrix: data.matrix,
+          globalImpactScale: typeof data.globalImpactScale === 'number' ? data.globalImpactScale : undefined
+        };
       }
     }
   } catch (_) {}
+  return {};
 }
 
 function getLiveImpactNumbers() {
+  if (!engine) return { componentIds: COMPONENT_IDS, globalImpactScale: 0.35, matrix: [] };
   return {
     description: 'Live impact matrix (current simulation values). Save as data/live-impact-matrix.json to store.',
     componentIds: [...COMPONENT_IDS],
@@ -102,36 +93,8 @@ const el = {
   devPanel: document.getElementById('dev-panel'),
   globalImpactScale: document.getElementById('global-impact-scale'),
   globalScaleValue: document.getElementById('global-scale-value'),
-  impactGrid: document.getElementById('impact-grid'),
-  rippleComponent: document.getElementById('ripple-component'),
-  rippleAmount: document.getElementById('ripple-amount'),
-  btnRippleApply: document.getElementById('btn-ripple-apply'),
-  btnRippleApplyRun: document.getElementById('btn-ripple-apply-run')
+  impactGrid: document.getElementById('impact-grid')
 };
-
-function setupRippleControl() {
-  if (!el.rippleComponent) return;
-  el.rippleComponent.innerHTML = COMPONENT_IDS.map(id =>
-    `<option value="${id}">${COMPONENT_LABELS[id]}</option>`
-  ).join('');
-  function applyRipple(startRun) {
-    const id = el.rippleComponent?.value;
-    const amount = parseFloat(el.rippleAmount?.value) || 0;
-    if (!id || amount <= 0) return;
-    const state = engine.getState();
-    const ranges = engine.ranges;
-    const [min, max] = ranges[id] ?? [0, 1];
-    const current = state[id] ?? min;
-    const next = Math.min(max, Math.max(min, current + amount));
-    engine.setState({ ...state, [id]: next });
-    COMPONENT_IDS.forEach(cid => updateCardValue(cid, (engine.getState())[cid]));
-    const sliderEl = el.componentCards?.querySelector(`input[data-id="${id}"]`);
-    if (sliderEl) sliderEl.value = next;
-    if (startRun && !running) run();
-  }
-  el.btnRippleApply?.addEventListener('click', () => applyRipple(false));
-  el.btnRippleApplyRun?.addEventListener('click', () => applyRipple(true));
-}
 
 function renderComponentCards() {
   const state = engine.getState();
@@ -194,6 +157,8 @@ function updateCardValue(id, value) {
   if (sliderEl) sliderEl.value = value;
 }
 
+const TICK_INTERVAL_MS = 220; // how often to advance simulation (ms) — higher = slower
+
 function tickAndRender() {
   const prev = engine.getState();
   const next = engine.tick(prev);
@@ -206,12 +171,12 @@ function tickAndRender() {
   });
 
   if (running) {
-    animationId = requestAnimationFrame(tickAndRender);
+    animationId = setTimeout(tickAndRender, TICK_INTERVAL_MS);
   }
 }
 
 function run() {
-  if (running) return;
+  if (!engine || running) return;
   running = true;
   el.btnRun.disabled = true;
   el.btnPause.disabled = false;
@@ -220,12 +185,13 @@ function run() {
 
 function pause() {
   running = false;
-  if (animationId) cancelAnimationFrame(animationId);
+  if (animationId) clearTimeout(animationId);
   el.btnRun.disabled = false;
   el.btnPause.disabled = true;
 }
 
 function reset() {
+  if (!engine) return;
   pause();
   engine.setState(INITIAL_VALUES);
   simTime = 0;
@@ -305,10 +271,21 @@ el.globalImpactScale.addEventListener('input', () => {
 const btnExportImpact = document.getElementById('btn-export-impact');
 if (btnExportImpact) btnExportImpact.addEventListener('click', exportLiveImpactMatrix);
 
-// Load stored live impact matrix, then initial render
+// Load live-impact-matrix when available and create engine with it (overwrites config impact); then initial render
 (async () => {
-  await loadStoredImpactMatrix();
+  const loaded = await loadLiveImpactMatrix();
+  engine = createEngine({
+    timeStep: 0.06,
+    customImpactMatrix: loaded.matrix || undefined,
+    impactScale: loaded.globalImpactScale
+  });
+  engine.setState(INITIAL_VALUES);
+  if (loaded.globalImpactScale != null) {
+    const scaleEl = document.getElementById('global-impact-scale');
+    const valueEl = document.getElementById('global-scale-value');
+    if (scaleEl) scaleEl.value = loaded.globalImpactScale;
+    if (valueEl) valueEl.textContent = String(loaded.globalImpactScale);
+  }
   renderComponentCards();
-  setupRippleControl();
   el.globalScaleValue.textContent = el.globalImpactScale.value;
 })();

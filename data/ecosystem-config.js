@@ -67,7 +67,7 @@ export const RANGES = {
   Birds: [5, 800],
   RiverQuality: [0.1, 10],
   Beaver: [1, 80],
-  Dam: [0.5, 50],
+  Dam: [0.5, 20],
   Fish: [10, 500],
   OtherAnimals: [5, 400],
   Cattle: [0, 300],
