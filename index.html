@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yellowstone Ecosystem — Wolf Reintroduction Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Yellowstone Ecosystem</h1>
+      <p class="tagline">Track how wolves and each component affect the whole system</p>
+      <div class="ripple-control" aria-label="Increase one component and see ripple effects">
+        <span class="ripple-label">Increase one component and watch the rest:</span>
+        <select id="ripple-component" class="ripple-select"></select>
+        <label class="ripple-by">
+          <span>by</span>
+          <input type="number" id="ripple-amount" min="0" step="1" value="50" />
+        </label>
+        <button type="button" id="btn-ripple-apply" class="btn btn-outline">Apply</button>
+        <button type="button" id="btn-ripple-apply-run" class="btn btn-primary">Apply & Run</button>
+      </div>
+      <div class="controls-top">
+        <button type="button" id="btn-run" class="btn btn-primary">Run</button>
+        <button type="button" id="btn-pause" class="btn btn-secondary" disabled>Pause</button>
+        <button type="button" id="btn-reset" class="btn btn-outline">Reset</button>
+        <span class="sim-time">Time: <strong id="sim-time">0</strong></span>
+        <label class="dev-toggle">
+          <input type="checkbox" id="dev-panel-toggle" />
+          <span>Dev: impact factors</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="dashboard">
+        <h2>Ecosystem components</h2>
+        <p class="hint">Adjust any slider to change that component and see ripple effects. Values stay within safe ranges.</p>
+        <div id="component-cards" class="component-cards"></div>
+      </section>
+
+      <section id="dev-panel" class="dev-panel hidden">
+        <h2>Developer: impact factors</h2>
+        <p class="hint">Change how strongly each component affects others. Row = source, Column = target.</p>
+        <div class="impact-scale">
+          <label>Global impact scale: <input type="range" id="global-impact-scale" min="0.1" max="2" step="0.05" value="0.35" /> <span id="global-scale-value">0.35</span></label>
+          <button type="button" id="btn-export-impact" class="btn btn-outline">Export live impact matrix</button>
+        </div>
+        <p class="hint">Live numbers are stored in <code>data/live-impact-matrix.json</code> and in browser storage when you edit. Export downloads current values.</p>
+        <div id="impact-grid" class="impact-grid"></div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
