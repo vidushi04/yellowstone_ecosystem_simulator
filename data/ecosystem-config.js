@@ -57,12 +57,12 @@ export const BASE_IMPACT_MATRIX = [
 
 // [min, max] for each component (non-zero min to avoid collapse; max to prevent blow-up)
 export const RANGES = {
-  Wolves: [1, 200],
-  Elk: [10, 2000],
+  Wolves: [1, 100],
+  Elk: [10, 1000],
   CottonWood: [5, 500],
   BerryTrees: [5, 500],
   Grass: [50, 3000],
-  Bears: [2, 150],
+  Bears: [2, 50],
   LandFertility: [0.1, 10],
   Birds: [5, 800],
   RiverQuality: [0.1, 10],
@@ -76,18 +76,17 @@ export const RANGES = {
   ParkRevenue: [1, 100]
 };
 
-// Birth probability (per time step, base rate) — only for living populations; scaled by (1 - N/K) for carrying capacity
-// Kept moderate so growth is limited by carrying capacity before hitting max
+// Birth probability (per time step). For living components: surviving = current + impact delta; birth = surviving × birthProb × (1 - N/K) × dt.
 export const BIRTH_PROBABILITY = {
-  Wolves: 0.05,
+  Wolves: 0.075,
   Elk: 0.06,
   CottonWood: 0.018,
   BerryTrees: 0.018,
-  Grass: 0.05,
-  Bears: 0.035,
+  Grass: 0.99,
+  Bears: 0.01,
   Birds: 0.045,
   Beaver: 0.035,
-  Fish: 0.05,
+  Fish: 0.5,
   OtherAnimals: 0.045,
   Cattle: 0.025,
   RangersRanchers: 0,
@@ -98,10 +97,9 @@ export const BIRTH_PROBABILITY = {
   Dam: 0
 };
 
-// Death probability (per time step, base rate); can increase with crowding
-// Slightly higher base death helps prevent all components from maxing out
+// Death probability (per time step). For living: death = surviving × deathProb × (1 + crowding + prey scarcity) × dt.
 export const DEATH_PROBABILITY = {
-  Wolves: 0.08,
+  Wolves: 0.05,
   Elk: 0.055,
   CottonWood: 0.02,
   BerryTrees: 0.02,
@@ -117,7 +115,7 @@ export const DEATH_PROBABILITY = {
   ParkRevenue: 0.015,
   LandFertility: 0,
   RiverQuality: 0,
-  Dam: 0.025
+  Dam: 0.75
 };
 
 // Carrying capacity multiplier (K = range_max * CARRYING_CAPACITY_FRACTION) for logistic growth
@@ -138,24 +136,24 @@ export const HUNT_SUCCESS_PROBABILITY = {
   'OtherAnimals_CottonWood': 1,
   'OtherAnimals_BerryTrees': 1,
   'OtherAnimals_Grass': 1,
-  'Birds_Grass': 1,
+  'Birds_Grass': 0,
   'Beaver_CottonWood': 0,
   'Fish_OtherAnimals': 0
 };
 
 // Initial values (realistic starting point for equilibrium; not at max)
 export const INITIAL_VALUES = {
-  Wolves: 40,
-  Elk: 600,
+  Wolves: 10,
+  Elk: 400,
   CottonWood: 120,
   BerryTrees: 100,
-  Grass: 800,
+  Grass: 500,
   Bears: 35,
   LandFertility: 4,
   Birds: 120,
-  RiverQuality: 5,
+  RiverQuality: 8,
   Beaver: 15,
-  Dam: 8,
+  Dam: 1,
   Fish: 150,
   OtherAnimals: 80,
   Cattle: 50,
@@ -182,7 +180,20 @@ export const FLOOR_RECOVERY_SUPPORT = {
 };
 export const FLOOR_SUPPORT_THRESHOLD = 0.35; // support must be above this fraction of its max for full floor recovery
 
-// Rate-of-change coupling: a component's *rate of change* (increase/decrease) affects linked components.
-// E.g. when Dam is decreasing, River quality is pulled down even if the level link Dam→River is positive.
-// Strength in [0,1]; 0 = level-only (old behavior), higher = stronger propagation of rates.
+// Rate coupling: each component's change uses the *rates of its input nodes* (what impacts its growth), not its own rate.
+// E.g. Elk dropping → Wolves drop; Wolves dropping → Elk rise. Strength in [0,1]; 0 = level-only.
 export const RATE_COUPLING_STRENGTH = 0.35;
+
+// Second-step rate coupling: rate from t-2 also affects targets (weaker), so e.g. Elk↑ at t → Cotton Wood↓ at t+1 → River↓ at t+2.
+export const RATE_COUPLING_STRENGTH_T2 = 0.2;
+
+// Output-node dependence: when component i negatively affects j (e.g. Elk consumes Grass), i's growth is limited by j's availability.
+// So component value depends on both input nodes (what affects it) and output nodes (what it affects).
+export const OUTPUT_LIMITING_STRENGTH = 0.4;
+
+// When River quality is below this fraction of its max, components that depend on River get a scarcity penalty (so low River affects the whole ecosystem).
+export const RIVER_SCARCITY_THRESHOLD = 0.3;
+export const RIVER_SCARCITY_STRENGTH = 50.0;
+
+// Floor recovery for River and Dam so they don't get stuck at minimum (no birth/death, so they need baseline recovery).
+export const ENV_FLOOR_RECOVERY_RATE = 0.015;
