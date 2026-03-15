@@ -143,24 +143,43 @@ export const HUNT_SUCCESS_PROBABILITY = {
 
 // Initial values (realistic starting point for equilibrium; not at max)
 export const INITIAL_VALUES = {
-  Wolves: 10,
-  Elk: 400,
-  CottonWood: 120,
-  BerryTrees: 100,
-  Grass: 500,
-  Bears: 35,
-  LandFertility: 4,
-  Birds: 120,
-  RiverQuality: 8,
-  Beaver: 15,
-  Dam: 1,
-  Fish: 150,
-  OtherAnimals: 80,
-  Cattle: 50,
-  RangersRanchers: 12,
-  Visitors: 80,
-  ParkRevenue: 25
+  Wolves: 40,
+  Elk: 250,
+  CottonWood: 250,
+  BerryTrees: 160,
+  Grass: 1120,
+  Bears: 45,
+  LandFertility: 8.44,
+  Birds: 750,
+  RiverQuality: 8.6,
+  Beaver: 55,
+  Dam: 10,
+  Fish: 300,
+  OtherAnimals: 350,
+  Cattle: 210,
+  RangersRanchers: 48,
+  Visitors: 380,
+  ParkRevenue: 98
 };
+// export const INITIAL_VALUES = {
+//   Wolves: 10,
+//   Elk: 400,
+//   CottonWood: 120,
+//   BerryTrees: 100,
+//   Grass: 500,
+//   Bears: 35,
+//   LandFertility: 4,
+//   Birds: 120,
+//   RiverQuality: 8,
+//   Beaver: 15,
+//   Dam: 1,
+//   Fish: 150,
+//   OtherAnimals: 80,
+//   Cattle: 50,
+//   RangersRanchers: 12,
+//   Visitors: 80,
+//   ParkRevenue: 25
+// };
 
 // Optional: global multiplier for all impacts (developer knob)
 // Kept below 1 to avoid positive feedback driving everything to max

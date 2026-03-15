@@ -299,3 +299,89 @@ body {
 .impact-cell.zero input {
   color: var(--text-muted);
 }
+
+/* Path impact (discrete path view) */
+.path-impact-section {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.path-impact-section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.path-impact-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.path-impact-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.path-impact-controls select {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.9rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.path-impact-controls input[type="number"] {
+  width: 4rem;
+  padding: 0.35rem;
+  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+
+.path-impact-section h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1rem;
+}
+
+.path-impact-table-wrap {
+  margin-bottom: 1rem;
+}
+
+.path-impact-table {
+  width: 100%;
+  max-width: 24rem;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.path-impact-table th,
+.path-impact-table td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+
+.path-impact-table thead {
+  background: var(--surface-hover);
+}
+
+.path-impact-result.hidden {
+  display: none;
+}
+
+.path-impact-result {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+}

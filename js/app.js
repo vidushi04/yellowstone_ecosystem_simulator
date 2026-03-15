@@ -8,8 +8,10 @@ import {
   INITIAL_VALUES,
   COMPONENT_LABELS,
   COMPONENT_IDS,
-  RANGES
+  RANGES,
+  BASE_IMPACT_MATRIX
 } from '../data/ecosystem-config.js';
+import { oneStepImpactOnly } from './path-impact.js';
 
 // Abbreviations for dev grid
 const SHORT_LABELS = {
@@ -93,8 +95,70 @@ const el = {
   devPanel: document.getElementById('dev-panel'),
   globalImpactScale: document.getElementById('global-impact-scale'),
   globalScaleValue: document.getElementById('global-scale-value'),
-  impactGrid: document.getElementById('impact-grid')
+  impactGrid: document.getElementById('impact-grid'),
+  pathSource: document.getElementById('path-source'),
+  pathDest: document.getElementById('path-dest'),
+  pathDelta: document.getElementById('path-delta'),
+  pathImpactBtn: document.getElementById('path-impact-btn'),
+  pathImpactReset: document.getElementById('path-impact-reset'),
+  pathImpactTableWrap: document.getElementById('path-impact-table-wrap'),
+  pathImpactResult: document.getElementById('path-impact-result'),
+  pathDestLabel: document.getElementById('path-dest-label'),
+  pathDestBefore: document.getElementById('path-dest-before'),
+  pathDestAfter: document.getElementById('path-dest-after'),
+  pathDestDelta: document.getElementById('path-dest-delta')
 };
+
+let pathImpactState = {};
+
+function setupPathImpact() {
+  if (!el.pathSource || !el.pathDest) return;
+  pathImpactState = { ...INITIAL_VALUES };
+  COMPONENT_IDS.forEach(id => {
+    el.pathSource.appendChild(new Option(COMPONENT_LABELS[id], id));
+    el.pathDest.appendChild(new Option(COMPONENT_LABELS[id], id));
+  });
+  el.pathImpactBtn.addEventListener('click', runPathImpact);
+  if (el.pathImpactReset) el.pathImpactReset.addEventListener('click', () => {
+    pathImpactState = { ...INITIAL_VALUES };
+    renderPathImpactTable();
+    if (el.pathImpactResult) el.pathImpactResult.classList.add('hidden');
+  });
+  renderPathImpactTable();
+}
+
+function renderPathImpactTable() {
+  if (!el.pathImpactTableWrap) return;
+  let html = '<table class="path-impact-table"><thead><tr><th>Component</th><th>Value</th></tr></thead><tbody>';
+  COMPONENT_IDS.forEach(id => {
+    const v = pathImpactState[id] ?? 0;
+    html += `<tr><td>${COMPONENT_LABELS[id]}</td><td>${Number(v).toFixed(2)}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  el.pathImpactTableWrap.innerHTML = html;
+}
+
+function runPathImpact() {
+  const sourceId = el.pathSource?.value;
+  const destId = el.pathDest?.value;
+  const deltaAmount = parseFloat(el.pathDelta?.value) || 0;
+  if (!sourceId || !destId) return;
+  // One step from current state: add deltaAmount to source, apply impacts + birth/death, update table
+  const destBefore = pathImpactState[destId] ?? 0;
+  const matrix = engine ? engine.getImpactMatrix() : BASE_IMPACT_MATRIX;
+  const result = oneStepImpactOnly(pathImpactState, sourceId, destId, deltaAmount, COMPONENT_IDS, matrix, RANGES, { scale: 0.35, dt: 0.15 });
+  pathImpactState = result.nextState;
+  const destAfter = result.nextState[destId] ?? 0;
+  renderPathImpactTable();
+  if (el.pathImpactResult) {
+    const fmt = (x) => (x >= 0 ? '+' : '') + Number(x).toFixed(3);
+    if (el.pathDestLabel) el.pathDestLabel.textContent = COMPONENT_LABELS[destId] || destId;
+    if (el.pathDestBefore) el.pathDestBefore.textContent = Number(destBefore).toFixed(3);
+    if (el.pathDestAfter) el.pathDestAfter.textContent = Number(destAfter).toFixed(3);
+    if (el.pathDestDelta) el.pathDestDelta.textContent = fmt(result.destinationChange);
+    el.pathImpactResult.classList.remove('hidden');
+  }
+}
 
 function renderComponentCards() {
   const state = engine.getState();
@@ -287,5 +351,6 @@ if (btnExportImpact) btnExportImpact.addEventListener('click', exportLiveImpactM
     if (valueEl) valueEl.textContent = String(loaded.globalImpactScale);
   }
   renderComponentCards();
+  setupPathImpact();
   el.globalScaleValue.textContent = el.globalImpactScale.value;
 })();
