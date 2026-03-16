@@ -83,7 +83,7 @@ export const BIRTH_PROBABILITY = {
   CottonWood: 0.018,
   BerryTrees: 0.018,
   Grass: 0.99,
-  Bears: 0.01,
+  Bears: 0.001,
   Birds: 0.045,
   Beaver: 0.035,
   Fish: 0.5,

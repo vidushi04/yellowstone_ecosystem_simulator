@@ -171,18 +171,31 @@ function renderComponentCards() {
     const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
     const label = COMPONENT_LABELS[id];
 
+    const pctInt = Math.round(pct);
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className = 'actor-card';
     card.innerHTML = `
-      <div class="card-header">
-        <span class="card-title">${label}</span>
-        <span class="card-value" data-id="${id}">${formatVal(value)}</span>
+      <div class="actor-card-media" data-id="${id}">
+        <img class="actor-card-img" data-id="${id}" alt="${label}" />
+        <span class="actor-card-placeholder">${label.charAt(0)}</span>
       </div>
-      <div class="card-bar-wrap">
-        <div class="card-bar" data-id="${id}" style="width: ${pct}%"></div>
+      <div class="actor-card-body">
+        <h3 class="actor-card-title">${label}</h3>
+        <div class="actor-card-row">
+          <span class="actor-card-label">Maximum</span>
+          <span class="actor-card-max">${formatVal(max)}</span>
+        </div>
+        <div class="actor-card-row actor-card-scale-row">
+          <span class="actor-card-label">Population Scale</span>
+          <span class="actor-card-pct" data-id="${id}">${pctInt}%</span>
+        </div>
+        <div class="actor-card-slider-wrap">
+          <div class="actor-card-track" data-id="${id}">
+            <div class="actor-card-fill" data-id="${id}" style="width: ${pct}%"></div>
+          </div>
+          <input type="range" data-id="${id}" min="${min}" max="${max}" step="${stepFor(min, max)}" value="${value}" class="actor-card-slider" aria-label="Population scale for ${label}" />
+        </div>
       </div>
-      <div class="card-meta">${formatVal(min)} – ${formatVal(max)}</div>
-      <input type="range" data-id="${id}" min="${min}" max="${max}" step="${stepFor(min, max)}" value="${value}" />
     `;
     const slider = card.querySelector('input[type="range"]');
     slider.addEventListener('input', () => {
@@ -190,6 +203,25 @@ function renderComponentCards() {
       engine.setState({ ...engine.getState(), [id]: v });
       updateCardValue(id, v);
     });
+
+    const img = card.querySelector('.actor-card-img');
+    const placeholder = card.querySelector('.actor-card-placeholder');
+    if (img && placeholder) {
+      const base = `assets/card-images/${id}`;
+      img.onload = () => {
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+      };
+      img.onerror = () => {
+        img.src = `${base}.jpg`;
+        img.onerror = () => {
+          img.style.display = 'none';
+          placeholder.style.display = 'flex';
+        };
+      };
+      img.src = `${base}.png`;
+    }
+
     el.componentCards.appendChild(card);
   });
 }
@@ -213,11 +245,12 @@ function updateCardValue(id, value) {
   const [min, max] = ranges[id];
   const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
 
-  const valEl = el.componentCards.querySelector(`.card-value[data-id="${id}"]`);
-  const barEl = el.componentCards.querySelector(`.card-bar[data-id="${id}"]`);
+  const pctEl = el.componentCards.querySelector(`.actor-card-pct[data-id="${id}"]`);
+  const fillEl = el.componentCards.querySelector(`.actor-card-fill[data-id="${id}"]`);
   const sliderEl = el.componentCards.querySelector(`input[data-id="${id}"]`);
-  if (valEl) valEl.textContent = formatVal(value);
-  if (barEl) barEl.style.width = `${pct}%`;
+  const pctInt = Math.round(pct);
+  if (pctEl) pctEl.textContent = `${pctInt}%`;
+  if (fillEl) fillEl.style.width = `${pct}%`;
   if (sliderEl) sliderEl.value = value;
 }
 

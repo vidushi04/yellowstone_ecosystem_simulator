@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ecosystem Playground</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles/main.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>Ecosystem playground</h1>
+      <p class="tagline">Drag any component card to see how one change ripples through all others (impact-only, no birth/death).</p>
+      <div class="controls-top">
+        <label class="dev-toggle">
+          <input type="checkbox" id="playground-dev-toggle" />
+          <span>Dev: impact matrix</span>
+        </label>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="dashboard">
+        <h2>Components</h2>
+        <p class="hint">Move any slider to change that component. All other cards update in one impact step using the current matrix.</p>
+        <button type="button" id="playground-reset" class="btn btn-outline">Reset to initial values</button>
+        <div id="playground-cards" class="component-cards"></div>
+      </section>
+
+      <section id="playground-dev-panel" class="dev-panel hidden">
+        <h2>Developer: impact factors (playground)</h2>
+        <p class="hint">Row = source, Column = target. Changes affect only this playground, not the main simulator.</p>
+        <div class="impact-scale">
+          <button type="button" id="playground-export-impact" class="btn btn-outline">
+            Export playground impact matrix
+          </button>
+        </div>
+        <div id="playground-impact-grid" class="impact-grid"></div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
+

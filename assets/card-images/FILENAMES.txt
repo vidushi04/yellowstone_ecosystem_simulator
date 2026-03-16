@@ -1,0 +1,20 @@
+# Exact filenames for card images (use .png or .jpg)
+# Copy these names when saving images from your computer.
+
+Wolves.png
+Elk.png
+CottonWood.png
+BerryTrees.png
+Grass.png
+Bears.png
+LandFertility.png
+Birds.png
+RiverQuality.png
+Beaver.png
+Dam.png
+Fish.png
+OtherAnimals.png
+Cattle.png
+RangersRanchers.png
+Visitors.png
+ParkRevenue.png
