@@ -26,23 +26,129 @@ const CATEGORIES = {
 let gameState = { ...INITIAL_VALUES };
 let currentMode = 'sandbox'; // 'sandbox', 'mission1', 'mission2'
 let impactMatrix = BASE_IMPACT_MATRIX.map(row => [...row]);
+let missionJustWon = false;
+
+function triggerVictoryFeedback() {
+  // Visual: small pop on the whole page + quick sparkle burst overlay
+  document.body.classList.remove('victory-pop');
+  // Force reflow so re-adding class restarts animation
+  void document.body.offsetWidth;
+  document.body.classList.add('victory-pop');
+
+  // Party popper emoji
+  const popper = document.createElement('div');
+  popper.className = 'party-popper';
+  popper.textContent = '🎉';
+  document.body.appendChild(popper);
+  popper.addEventListener('animationend', () => popper.remove(), { once: true });
+
+  const burst = document.createElement('div');
+  burst.className = 'victory-burst';
+  document.body.appendChild(burst);
+  burst.addEventListener('animationend', () => burst.remove(), { once: true });
+
+  // Confetti (small burst of falling pieces)
+  const colors = ['#FF9800', '#4CAF50', '#FFEB3B', '#2196F3', '#E91E63', '#9C27B0'];
+  const pieces = 36;
+  for (let i = 0; i < pieces; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    const startX = Math.random() * 100;
+    const drift = (Math.random() * 26 - 13);
+    c.style.left = `${startX}vw`;
+    c.style.setProperty('--x0', '0vw');
+    c.style.setProperty('--x1', `${drift}vw`);
+    c.style.setProperty('--confetti-color', colors[i % colors.length]);
+    c.style.animationDelay = `${Math.random() * 180}ms`;
+    c.style.width = `${6 + Math.random() * 8}px`;
+    c.style.height = `${8 + Math.random() * 10}px`;
+    document.body.appendChild(c);
+    c.addEventListener('animationend', () => c.remove(), { once: true });
+  }
+
+  // Sound: short victory “soundtrack” jingle (no external asset)
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.22, now + 0.015);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 2.4);
+    master.connect(ctx.destination);
+
+    // Melody + harmony (C major, upbeat)
+    const melody = [
+      { t: 0.00, f: 659.25, d: 0.18 }, // E5
+      { t: 0.18, f: 783.99, d: 0.18 }, // G5
+      { t: 0.36, f: 880.00, d: 0.18 }, // A5
+      { t: 0.54, f: 783.99, d: 0.18 }, // G5
+      { t: 0.72, f: 1046.5, d: 0.24 }, // C6
+      { t: 0.98, f: 987.77, d: 0.20 }, // B5
+      { t: 1.18, f: 1046.5, d: 0.30 }, // C6
+      { t: 1.52, f: 1318.51, d: 0.32 }, // E6
+      { t: 1.88, f: 1046.5, d: 0.42 } // C6 resolve
+    ];
+
+    const playNote = (freq, start, dur, type, gainScale) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, start);
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(gainScale, start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(start);
+      osc.stop(start + dur + 0.02);
+    };
+
+    melody.forEach(n => {
+      playNote(n.f, now + n.t, n.d, 'triangle', 0.9);
+      // simple harmony a third below (soft)
+      playNote(n.f / 1.2599, now + n.t, n.d, 'sine', 0.35);
+    });
+
+    // Little “sparkle” noise tick at the start
+    const noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuf;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.18, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+    noise.connect(noiseGain);
+    noiseGain.connect(master);
+    noise.start(now);
+    noise.stop(now + 0.09);
+
+    // Close context shortly after sound completes to avoid leaks.
+    setTimeout(() => ctx.close().catch(() => {}), 2800);
+  } catch (_) {
+    // If audio is blocked or unavailable, just skip sound.
+  }
+}
 
 // ---- Scenarios Definitions ----
 const SCENARIOS = {
   mission1: {
     title: "Mission 1: The Barren Land",
-    goal: "The elk have eaten all the Cottonwood! Introduce Wolves to bring back the Cottonwood to 60%.",
+    goal: "The elk have eaten all the grass! Introduce Wolves to bring back the Grass to 60%.",
     setup: () => {
       // Setup the "problem"
       gameState = { ...INITIAL_VALUES };
       gameState.Wolves = RANGES.Wolves[0]; // Min wolves
       gameState.Elk = RANGES.Elk[1] * 0.9; // 90% Elk
-      gameState.CottonWood = RANGES.CottonWood[0]; // Min Cottonwood
+      gameState.Grass = getValueFromPercentage(20, RANGES.Grass); // Start at 20% Grass
     },
     checkWin: () => {
-      // Win condition: Cottonwood is >= 60% of max
-      const cwPct = getPercentage(gameState.CottonWood, RANGES.CottonWood);
-      return cwPct >= 60;
+      // Win condition: Grass is >= 60% of max
+      const grassPct = getPercentage(gameState.Grass, RANGES.Grass);
+      return grassPct >= 60;
     }
   },
   mission2: {
@@ -232,19 +338,22 @@ function checkGameConditions() {
     if (isWin) {
       statusEl.textContent = "Mission Accomplished! 🎉";
       statusEl.classList.add('success');
-      
-      // Add a visual pop effect
-      document.body.style.animation = 'pop 0.5s';
-      setTimeout(() => document.body.style.animation = '', 500);
+
+      if (!missionJustWon) {
+        missionJustWon = true;
+        triggerVictoryFeedback();
+      }
     } else {
       statusEl.textContent = "In Progress";
       statusEl.classList.remove('success');
+      missionJustWon = false;
     }
   }
 }
 
 function setMode(mode) {
   currentMode = mode;
+  missionJustWon = false;
   
   // Update UI buttons
   document.querySelectorAll('.btn-mode').forEach(btn => btn.classList.remove('active'));

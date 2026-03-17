@@ -407,3 +407,82 @@ input[type=range]::-webkit-slider-thumb:hover {
 .impact-flash {
   animation: flash-impact 0.4s ease-out;
 }
+
+/* Victory animation + burst (mission complete) */
+@keyframes victory-pop {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.victory-pop {
+  animation: victory-pop 600ms cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.victory-burst {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  animation: victory-burst-fade 900ms ease-out forwards;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 152, 0, 0.55) 0 10px, transparent 11px),
+    radial-gradient(circle at 70% 20%, rgba(76, 175, 80, 0.55) 0 12px, transparent 13px),
+    radial-gradient(circle at 85% 60%, rgba(255, 235, 59, 0.55) 0 10px, transparent 11px),
+    radial-gradient(circle at 35% 75%, rgba(33, 150, 243, 0.40) 0 14px, transparent 15px),
+    radial-gradient(circle at 55% 45%, rgba(156, 39, 176, 0.40) 0 10px, transparent 11px);
+  transform-origin: center;
+}
+
+@keyframes victory-burst-fade {
+  0% { opacity: 0; transform: scale(0.98); }
+  15% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+
+@keyframes party-popper-pop {
+  0% { transform: translate(-50%, -50%) scale(0.6) rotate(-8deg); opacity: 0; }
+  18% { transform: translate(-50%, -60%) scale(1.15) rotate(6deg); opacity: 1; }
+  100% { transform: translate(-50%, -85%) scale(1) rotate(0deg); opacity: 0; }
+}
+
+.party-popper {
+  position: fixed;
+  left: 50%;
+  top: 55%;
+  transform: translate(-50%, -50%);
+  z-index: 10000;
+  pointer-events: none;
+  font-size: 64px;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.25));
+  animation: party-popper-pop 5000ms cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes confetti-fall {
+  0% { transform: translate3d(var(--x0), -10vh, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: 1; }
+  100% { transform: translate3d(var(--x1), 110vh, 0) rotate(720deg); opacity: 0; }
+}
+
+.confetti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  z-index: 9999;
+  pointer-events: none;
+  background: var(--confetti-color, #FF9800);
+  animation: confetti-fall 1400ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .victory-pop,
+  .victory-burst,
+  .party-popper,
+  .confetti {
+    animation: none !important;
+  }
+}
