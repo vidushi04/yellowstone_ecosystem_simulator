@@ -6,13 +6,13 @@
   --surface-hover: #232d26;
   --border: #2d3b32;
   --text: #e8ebe9;
-  --text-muted: #8a9a8e;
-  --accent: #4a9b6e;
-  --accent-dim: #3d7d5a;
+  --text-muted: #c7c7c7; /* Earlier it was #8a9a8e */
+  --accent: #894700; /* Earlier it was #4a9b6e */
+  --accent-dim: #dc974e;  /* Earlier it was #3d7d5a */
   --danger: #c75c5c;
   --warn: #c9a227;
   --radius: 10px;
-  --font: 'DM Sans', system-ui, sans-serif;
+  --font: 'Gorditas', system-ui, sans-serif; /* Earlier it was 'DM Sans', system-ui, sans-serif */
   --font-mono: 'JetBrains Mono', monospace;
   /* Main simulator background image (50% opacity). Change this to use a different image. */
   --simulator-bg-image: url('../assets/card-images/simulator-background.png');
@@ -52,6 +52,11 @@ body::before {
   padding: 1.5rem;
 }
 
+.playground-root {
+  padding: 4rem 5rem;
+  /* Earlier it was 2 rem and 2.25 rem */
+}
+
 .header {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
@@ -60,8 +65,8 @@ body::before {
 
 .header h1 {
   margin: 0 0 0.25rem;
-  font-size: 1.75rem;
-  font-weight: 700;
+  font-size: 2rem; /* Earlier it was 1.75rem */
+  font-weight: 700; 
   color: var(--text);
 }
 
@@ -118,6 +123,19 @@ body::before {
   background: rgba(74, 155, 110, 0.15);
 }
 
+/* Playground-specific button styling: filled, warm brown */
+.playground-root .btn-outline {
+  background: #894700;
+  color: #fff;
+  border-color: #894700;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.playground-root .btn-outline:hover:not(:disabled) {
+  background: #6a3600;
+}
+
 .sim-time {
   margin-left: 0.5rem;
   font-size: 0.9rem;
@@ -156,10 +174,18 @@ body::before {
   font-weight: 600;
 }
 
+.playground-root .dashboard h2 {
+  font-size: 1.3rem;
+}
+
 .hint {
   margin: 0 0 1rem;
   font-size: 0.85rem;
   color: var(--text-muted);
+}
+
+.playground-root .hint {
+  font-size: 0.95rem;
 }
 
 .component-cards {
@@ -173,6 +199,25 @@ body::before {
   background: rgba(15, 20, 18, 0.8);
   border-radius: var(--radius);
   border: 1px solid var(--border);
+}
+
+/* Playground dev matrix styled in card theme colors */
+#playground-dev-panel {
+  background: #f9f5ed;
+  border-color: rgba(109, 65, 34, 0.25);
+  color: #6d4122;
+}
+
+#playground-dev-panel .impact-cell.header {
+  background: transparent;
+  color: #6d4122;
+  font-weight: 600;
+}
+
+#playground-dev-panel .impact-cell input {
+  background: #fff3e0;
+  border-color: rgba(109, 65, 34, 0.25);
+  color: #6d4122;
 }
 
 /* Actor card — Figma design: image left, info + Population Scale right, warm palette */
@@ -387,7 +432,7 @@ body::before {
 .impact-cell {
   padding: 0.2rem;
   text-align: center;
-  background: var(--bg);
+  background: var(--text);
   border-radius: 4px;
   min-width: 36px;
 }
