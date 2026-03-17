@@ -33,22 +33,6 @@
         <div id="component-cards" class="component-cards"></div>
       </section>
 
-      <section id="path-impact-section" class="path-impact-section">
-        <h2>Path impact</h2>
-        <p class="hint">One-step impact only (no birth/death), so direction matches the matrix: e.g. reduce Wolves → Elk increases. Change a source by an amount and see how the destination changes.</p>
-        <h3>Current values (all components)</h3>
-        <div id="path-impact-table-wrap" class="path-impact-table-wrap"></div>
-        <div class="path-impact-controls">
-          <label>Change <select id="path-source"></select> by <input type="number" id="path-delta" value="50" step="1" /> → effect on <select id="path-dest"></select></label>
-          <button type="button" id="path-impact-btn" class="btn btn-primary">Apply one step</button>
-          <button type="button" id="path-impact-reset" class="btn btn-outline">Reset to initial</button>
-        </div>
-        <div id="path-impact-result" class="path-impact-result hidden">
-          <p><strong>Destination: <span id="path-dest-label"></span></strong></p>
-          <p>Before: <span id="path-dest-before"></span> → After: <span id="path-dest-after"></span> (change: <span id="path-dest-delta"></span>)</p>
-        </div>
-      </section>
-
       <section id="dev-panel" class="dev-panel hidden">
         <h2>Developer: impact factors</h2>
         <p class="hint">Change how strongly each component affects others. Row = source, Column = target.</p>
