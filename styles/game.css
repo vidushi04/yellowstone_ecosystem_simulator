@@ -110,6 +110,19 @@ h1, h2, h3, .btn {
   transition: all 0.2s ease;
 }
 
+.btn-mode:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(0,0,0,0.15);
+  color: rgba(0,0,0,0.5);
+}
+
+.btn-mode:disabled:hover {
+  background: var(--surface-color);
+}
+
 .btn-mode:hover {
   background: #E8F5E9;
   transform: translateY(-2px);

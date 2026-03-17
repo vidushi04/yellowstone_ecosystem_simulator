@@ -27,6 +27,32 @@ let gameState = { ...INITIAL_VALUES };
 let currentMode = 'sandbox'; // 'sandbox', 'mission1', 'mission2'
 let impactMatrix = BASE_IMPACT_MATRIX.map(row => [...row]);
 let missionJustWon = false;
+let mission1Completed = false;
+
+const MISSION1_COMPLETED_STORAGE_KEY = 'yellowstone-mission1-completed';
+
+function loadMissionProgress() {
+  try {
+    mission1Completed = localStorage.getItem(MISSION1_COMPLETED_STORAGE_KEY) === '1';
+  } catch (_) {
+    mission1Completed = false;
+  }
+}
+
+function storeMission1Completed() {
+  try {
+    localStorage.setItem(MISSION1_COMPLETED_STORAGE_KEY, '1');
+  } catch (_) {}
+}
+
+function updateMissionLocksUI() {
+  const btnMission2 = document.getElementById('btn-mode-mission2');
+  if (!btnMission2) return;
+  btnMission2.disabled = !mission1Completed;
+  btnMission2.title = mission1Completed
+    ? 'Mission 2 unlocked!'
+    : 'Complete Mission 1 to unlock Mission 2.';
+}
 
 function triggerVictoryFeedback() {
   // Visual: small pop on the whole page + quick sparkle burst overlay
@@ -153,10 +179,11 @@ const SCENARIOS = {
   },
   mission2: {
     title: "Mission 2: Bring Back the Fish",
-    goal: "The river is dirty and the fish are gone! Bring back Beavers to build Dams and clean the river.",
+    goal: "The river is dirty and the fish are gone! Increase Beavers and plant more Cottonwood so Beavers can build Dams and help the river recover.",
     setup: () => {
       gameState = { ...INITIAL_VALUES };
-      gameState.Beaver = RANGES.Beaver[0];
+      gameState.Beaver = getValueFromPercentage(10, RANGES.Beaver); // Start at 10% Beaver
+      gameState.CottonWood = getValueFromPercentage(20, RANGES.CottonWood); // Start at 20% Cottonwood
       gameState.Dam = RANGES.Dam[0];
       gameState.RiverQuality = RANGES.RiverQuality[0];
       gameState.Fish = RANGES.Fish[0];
@@ -164,7 +191,9 @@ const SCENARIOS = {
     checkWin: () => {
       const fishPct = getPercentage(gameState.Fish, RANGES.Fish);
       const damPct = getPercentage(gameState.Dam, RANGES.Dam);
-      return fishPct >= 50 && damPct >= 40;
+      const beaverPct = getPercentage(gameState.Beaver, RANGES.Beaver);
+      const cottonwoodPct = getPercentage(gameState.CottonWood, RANGES.CottonWood);
+      return fishPct >= 40 && damPct >= 50 && beaverPct >= 30 && cottonwoodPct >= 40;
     }
   }
 };
@@ -341,6 +370,11 @@ function checkGameConditions() {
 
       if (!missionJustWon) {
         missionJustWon = true;
+        if (currentMode === 'mission1') {
+          mission1Completed = true;
+          storeMission1Completed();
+          updateMissionLocksUI();
+        }
         triggerVictoryFeedback();
       }
     } else {
@@ -352,6 +386,10 @@ function checkGameConditions() {
 }
 
 function setMode(mode) {
+  // Gate: Mission 2 is only available after Mission 1 is completed.
+  if (mode === 'mission2' && !mission1Completed) {
+    mode = 'mission1';
+  }
   currentMode = mode;
   missionJustWon = false;
   
@@ -386,6 +424,8 @@ function setMode(mode) {
 
 // ---- Initialization ----
 document.addEventListener('DOMContentLoaded', () => {
+  loadMissionProgress();
   initUI();
+  updateMissionLocksUI();
   setMode('sandbox'); // Start in sandbox mode
 });
