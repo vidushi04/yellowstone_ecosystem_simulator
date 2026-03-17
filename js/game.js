@@ -27,31 +27,46 @@ let gameState = { ...INITIAL_VALUES };
 let currentMode = 'sandbox'; // 'sandbox', 'mission1', 'mission2'
 let impactMatrix = BASE_IMPACT_MATRIX.map(row => [...row]);
 let missionJustWon = false;
-let mission1Completed = false;
+let missionProgress = 0; // highest completed mission number (0 = none)
 
-const MISSION1_COMPLETED_STORAGE_KEY = 'yellowstone-mission1-completed';
+const MISSION_PROGRESS_STORAGE_KEY = 'yellowstone-mission-progress';
+
+function missionNumberFromMode(mode) {
+  const m = /^mission(\d+)$/.exec(mode);
+  return m ? parseInt(m[1], 10) : null;
+}
+
+function isMissionMode(mode) {
+  return /^mission\d+$/.test(mode);
+}
 
 function loadMissionProgress() {
   try {
-    mission1Completed = localStorage.getItem(MISSION1_COMPLETED_STORAGE_KEY) === '1';
+    const raw = localStorage.getItem(MISSION_PROGRESS_STORAGE_KEY);
+    // Back-compat: older builds stored only a "mission 1 completed" boolean.
+    const legacyMission1 = localStorage.getItem('yellowstone-mission1-completed') === '1';
+    const n = raw == null ? (legacyMission1 ? 1 : 0) : parseInt(raw, 10);
+    missionProgress = Number.isFinite(n) && n >= 0 ? n : 0;
   } catch (_) {
-    mission1Completed = false;
+    missionProgress = 0;
   }
 }
 
-function storeMission1Completed() {
+function storeMissionProgress() {
   try {
-    localStorage.setItem(MISSION1_COMPLETED_STORAGE_KEY, '1');
+    localStorage.setItem(MISSION_PROGRESS_STORAGE_KEY, String(missionProgress));
   } catch (_) {}
 }
 
 function updateMissionLocksUI() {
-  const btnMission2 = document.getElementById('btn-mode-mission2');
-  if (!btnMission2) return;
-  btnMission2.disabled = !mission1Completed;
-  btnMission2.title = mission1Completed
-    ? 'Mission 2 unlocked!'
-    : 'Complete Mission 1 to unlock Mission 2.';
+  const unlockedUpTo = missionProgress + 1; // next mission becomes available
+  for (let i = 1; i <= 6; i++) {
+    const btn = document.getElementById(`btn-mode-mission${i}`);
+    if (!btn) continue;
+    const unlocked = i <= unlockedUpTo;
+    btn.disabled = !unlocked;
+    btn.title = unlocked ? `Mission ${i} unlocked!` : `Complete Mission ${i - 1} to unlock Mission ${i}.`;
+  }
 }
 
 function triggerVictoryFeedback() {
@@ -195,6 +210,72 @@ const SCENARIOS = {
       const cottonwoodPct = getPercentage(gameState.CottonWood, RANGES.CottonWood);
       return fishPct >= 40 && damPct >= 50 && beaverPct >= 30 && cottonwoodPct >= 40;
     }
+  },
+  mission3: {
+    title: "Mission 3: Birdsong Returns",
+    goal: "The skies are too quiet. Help Birds return by improving river health and growing Berry Trees.",
+    setup: () => {
+      gameState = { ...INITIAL_VALUES };
+      gameState.Birds = getValueFromPercentage(20, RANGES.Birds);
+      gameState.RiverQuality = getValueFromPercentage(40, RANGES.RiverQuality);
+      gameState.BerryTrees = getValueFromPercentage(25, RANGES.BerryTrees);
+    },
+    checkWin: () => {
+      const birdsPct = getPercentage(gameState.Birds, RANGES.Birds);
+      const riverPct = getPercentage(gameState.RiverQuality, RANGES.RiverQuality);
+      const berryPct = getPercentage(gameState.BerryTrees, RANGES.BerryTrees);
+      return birdsPct >= 55 && riverPct >= 55 && berryPct >= 45;
+    }
+  },
+  mission4: {
+    title: "Mission 4: Healthy Soil, Healthy Park",
+    goal: "The ground is worn out. Restore Land Fertility so plants can bounce back and the park stays healthy.",
+    setup: () => {
+      gameState = { ...INITIAL_VALUES };
+      gameState.LandFertility = getValueFromPercentage(25, RANGES.LandFertility);
+      gameState.Grass = getValueFromPercentage(40, RANGES.Grass);
+      gameState.CottonWood = getValueFromPercentage(35, RANGES.CottonWood);
+    },
+    checkWin: () => {
+      const landPct = getPercentage(gameState.LandFertility, RANGES.LandFertility);
+      const grassPct = getPercentage(gameState.Grass, RANGES.Grass);
+      const cottonwoodPct = getPercentage(gameState.CottonWood, RANGES.CottonWood);
+      return landPct >= 60 && grassPct >= 60 && cottonwoodPct >= 50;
+    }
+  },
+  mission5: {
+    title: "Mission 5: Ranching vs. Rewilding",
+    goal: "Wolves are being killed as human activity increases. Reduce human pressure (Rangers/Ranchers) so Wolves can recover.",
+    setup: () => {
+      gameState = { ...INITIAL_VALUES };
+      // High ranching + human pressure, low wolves
+      gameState.Wolves = getValueFromPercentage(15, RANGES.Wolves);
+      gameState.RangersRanchers = getValueFromPercentage(80, RANGES.RangersRanchers);
+      gameState.Grass = getValueFromPercentage(40, RANGES.Grass);
+    },
+    checkWin: () => {
+      const wolvesPct = getPercentage(gameState.Wolves, RANGES.Wolves);
+      const rangersPct = getPercentage(gameState.RangersRanchers, RANGES.RangersRanchers);
+      return wolvesPct >= 30 && rangersPct <= 50;
+    }
+  },
+  mission6: {
+    title: "Mission 6: Tourism Boom, Park Balance",
+    goal: "Visitor numbers are soaring. Keep the park funded while protecting nature with good stewardship.",
+    setup: () => {
+      gameState = { ...INITIAL_VALUES };
+      gameState.Visitors = getValueFromPercentage(85, RANGES.Visitors);
+      gameState.RiverQuality = getValueFromPercentage(50, RANGES.RiverQuality);
+      gameState.ParkRevenue = getValueFromPercentage(65, RANGES.ParkRevenue);
+      gameState.RangersRanchers = getValueFromPercentage(40, RANGES.RangersRanchers);
+    },
+    checkWin: () => {
+      const visitorsPct = getPercentage(gameState.Visitors, RANGES.Visitors);
+      const riverPct = getPercentage(gameState.RiverQuality, RANGES.RiverQuality);
+      const revenuePct = getPercentage(gameState.ParkRevenue, RANGES.ParkRevenue);
+      const rangersPct = getPercentage(gameState.RangersRanchers, RANGES.RangersRanchers);
+      return revenuePct >= 60 && riverPct >= 55 && rangersPct >= 55 && visitorsPct <= 70;
+    }
   }
 };
 
@@ -278,6 +359,10 @@ function initUI() {
   document.getElementById('btn-mode-sandbox').addEventListener('click', () => setMode('sandbox'));
   document.getElementById('btn-mode-mission1').addEventListener('click', () => setMode('mission1'));
   document.getElementById('btn-mode-mission2').addEventListener('click', () => setMode('mission2'));
+  document.getElementById('btn-mode-mission3').addEventListener('click', () => setMode('mission3'));
+  document.getElementById('btn-mode-mission4').addEventListener('click', () => setMode('mission4'));
+  document.getElementById('btn-mode-mission5').addEventListener('click', () => setMode('mission5'));
+  document.getElementById('btn-mode-mission6').addEventListener('click', () => setMode('mission6'));
 }
 
 function updateUI() {
@@ -370,9 +455,10 @@ function checkGameConditions() {
 
       if (!missionJustWon) {
         missionJustWon = true;
-        if (currentMode === 'mission1') {
-          mission1Completed = true;
-          storeMission1Completed();
+        const n = missionNumberFromMode(currentMode);
+        if (n != null && n > missionProgress) {
+          missionProgress = n;
+          storeMissionProgress();
           updateMissionLocksUI();
         }
         triggerVictoryFeedback();
@@ -386,9 +472,13 @@ function checkGameConditions() {
 }
 
 function setMode(mode) {
-  // Gate: Mission 2 is only available after Mission 1 is completed.
-  if (mode === 'mission2' && !mission1Completed) {
-    mode = 'mission1';
+  // Gate: missions unlock sequentially (Mission n+1 after Mission n).
+  if (isMissionMode(mode)) {
+    const requested = missionNumberFromMode(mode) || 1;
+    const unlockedUpTo = missionProgress + 1;
+    if (requested > unlockedUpTo) {
+      mode = `mission${Math.max(1, unlockedUpTo)}`;
+    }
   }
   currentMode = mode;
   missionJustWon = false;
