@@ -254,7 +254,7 @@ function updateCardValue(id, value) {
   if (sliderEl) sliderEl.value = value;
 }
 
-const TICK_INTERVAL_MS = 220; // how often to advance simulation (ms) — higher = slower
+const TICK_INTERVAL_MS = 36; // how often to advance simulation (ms) — higher = slower (≈3x faster than 110ms)
 
 function tickAndRender() {
   const prev = engine.getState();
