@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yellowstone Balance: The Ecosystem Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/game.css" />
+</head>
+<body>
+  <div class="game-container">
+    <header class="game-header">
+      <div class="logo">
+        <img src="assets/card-images/Wolves.png" alt="Wolf Logo" onerror="this.src='assets/card-images/Wolves.jpg'; this.onerror=null;" />
+        <h1>Yellowstone Balance</h1>
+      </div>
+      <p class="tagline">Be the Park Ranger! Slide the animals to see how they change the ecosystem.</p>
+    </header>
+
+    <main class="game-main">
+      <section class="game-controls">
+        <div class="mode-selector">
+          <button id="btn-mode-sandbox" class="btn-mode active">Sandbox (Free Play)</button>
+          <button id="btn-mode-mission1" class="btn-mode">Mission: The Barren Land</button>
+          <button id="btn-mode-mission2" class="btn-mode">Mission: Bring Back the Fish</button>
+        </div>
+        <div id="mission-info" class="mission-info hidden">
+          <h2 id="mission-title">Mission Title</h2>
+          <p id="mission-goal">Goal goes here</p>
+          <div id="mission-status" class="mission-status">In Progress</div>
+        </div>
+        <div class="actions">
+          <button id="btn-reset" class="btn btn-primary">Reset Park</button>
+        </div>
+      </section>
+
+      <section class="ecosystem-view">
+        <div id="alert-banner" class="alert-banner hidden">
+          <span class="alert-icon">⚠️</span>
+          <span id="alert-message">Alert Message</span>
+        </div>
+        
+        <div class="categories">
+          <!-- We will categorize the components in JS and render them here -->
+          <div id="category-predators" class="category-block">
+            <h3>Predators & Large Mammals</h3>
+            <div class="card-grid" id="grid-predators"></div>
+          </div>
+          
+          <div id="category-small" class="category-block">
+            <h3>Small Animals & Aquatic Life</h3>
+            <div class="card-grid" id="grid-small"></div>
+          </div>
+          
+          <div id="category-flora" class="category-block">
+            <h3>Flora (Plants)</h3>
+            <div class="card-grid" id="grid-flora"></div>
+          </div>
+          
+          <div id="category-env" class="category-block">
+            <h3>Environment & Infrastructure</h3>
+            <div class="card-grid" id="grid-env"></div>
+          </div>
+          
+          <div id="category-human" class="category-block">
+            <h3>Humans & Economics</h3>
+            <div class="card-grid" id="grid-human"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="game-footer">
+      <p>Created for aspiring Park Rangers everywhere!</p>
+    </footer>
+  </div>
+
+  <script src="js/game-data.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
