@@ -248,8 +248,8 @@ h1, h2, h3, .btn {
 }
 
 .actor-card-media {
-  width: 80px;
-  height: 80px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   background: #E0E0E0;
   display: flex;
@@ -269,7 +269,7 @@ h1, h2, h3, .btn {
 
 .actor-card-placeholder {
   font-family: 'Fredoka One', cursive;
-  font-size: 2rem;
+  font-size: 4rem;
   color: #999;
 }
 
